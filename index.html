@@ -96,6 +96,9 @@
     <div class="e-content article-entry" itemprop="articleBody">
       
         <p>在我们的日常开发过程中，可以使用jira的api来对jira进行操作，比如创建issue，更新issue，更新issue状态，查询issue列表等。下面我来列举常用的api。</p>
+<h3 id="创建Issue"><a href="#创建Issue" class="headerlink" title="创建Issue"></a>创建Issue</h3><p>创建issue使得我们可以使用代码创建issue，api地址为：&#x2F;rest&#x2F;api&#x2F;2&#x2F;issue&#x2F;XXXX，使用Post方法，参数格式为：<br>{<br>    “fields”: {<br>        “project”: {<br>            “id”: “10000”<br>        },<br>        “summary”: “创建问题概况”,<br>        “issuetype”: {<br>            “id”: “10003”<br>        },<br>        “priority”: {<br>            “id”: “3”<br>        },<br>      “customfield_10000”: {<br>            “value”: “abcd”<br>        },<br>        “description”: “创建问题描述”<br>    }<br>}</p>
+<h3 id="修改issue"><a href="#修改issue" class="headerlink" title="修改issue"></a>修改issue</h3><p>修改issue的api地址为：&#x2F;rest&#x2F;api&#x2F;2&#x2F;issue&#x2F;issueKey，使用Put方法，将需要添加或者修改的参数放在json中：<br>{<br>    “fields” : {<br>        “description”: “Description111”,<br>        “customfield_10000”: {<br>            “value”: “ad”<br>        }<br>    }<br>}</p>
+<h3 id="获取issue详情："><a href="#获取issue详情：" class="headerlink" title="获取issue详情："></a>获取issue详情：</h3><p>获取issue详情的地址为：&#x2F;rest&#x2F;api&#x2F;2&#x2F;issue&#x2F;issueKey，使用get方法。</p>
 
       
     </div>
