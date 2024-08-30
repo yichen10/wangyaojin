@@ -4,13 +4,17 @@
   <meta charset="utf-8">
   
   
-  <title>一尘的个人博客</title>
+  <title>如何华为云函数中使用自己的依赖包 | 一尘的个人博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="一尘的个人博客">
-<meta property="og:url" content="https://yichen10.github.io/index.html">
+  <meta name="description" content="1. 创建函数首先，在华为云控制台创建一个新的函数。 2. 准备依赖包将你的依赖包和函数代码打包成一个ZIP文件。确保你的依赖包和函数代码在同一个目录下。 例如，假设你的项目结构如下： 1234my_function&#x2F;├── __init__.py├── my_function.py└── requirements.txt  在my_function目录下，运行以下命令来安装依赖包： 1pip i">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何华为云函数中使用自己的依赖包">
+<meta property="og:url" content="https://yichen10.github.io/2024/08/30/%E5%A6%82%E4%BD%95%E5%8D%8E%E4%B8%BA%E4%BA%91%E5%87%BD%E6%95%B0%E4%B8%AD%E4%BD%BF%E7%94%A8%E8%87%AA%E5%B7%B1%E7%9A%84%E4%BE%9D%E8%B5%96%E5%8C%85/index.html">
 <meta property="og:site_name" content="一尘的个人博客">
+<meta property="og:description" content="1. 创建函数首先，在华为云控制台创建一个新的函数。 2. 准备依赖包将你的依赖包和函数代码打包成一个ZIP文件。确保你的依赖包和函数代码在同一个目录下。 例如，假设你的项目结构如下： 1234my_function&#x2F;├── __init__.py├── my_function.py└── requirements.txt  在my_function目录下，运行以下命令来安装依赖包： 1pip i">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-08-30T11:32:32.000Z">
+<meta property="article:modified_time" content="2024-08-30T11:34:26.332Z">
 <meta property="article:author" content="yichen">
 <meta name="twitter:card" content="summary">
   
@@ -71,9 +75,7 @@
 </header>
 
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-如何华为云函数中使用自己的依赖包" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+        <section id="main"><article id="post-如何华为云函数中使用自己的依赖包" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2024/08/30/%E5%A6%82%E4%BD%95%E5%8D%8E%E4%B8%BA%E4%BA%91%E5%87%BD%E6%95%B0%E4%B8%AD%E4%BD%BF%E7%94%A8%E8%87%AA%E5%B7%B1%E7%9A%84%E4%BE%9D%E8%B5%96%E5%8C%85/" class="article-date">
   <time class="dt-published" datetime="2024-08-30T11:32:32.000Z" itemprop="datePublished">2024-08-30</time>
@@ -86,8 +88,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2024/08/30/%E5%A6%82%E4%BD%95%E5%8D%8E%E4%B8%BA%E4%BA%91%E5%87%BD%E6%95%B0%E4%B8%AD%E4%BD%BF%E7%94%A8%E8%87%AA%E5%B7%B1%E7%9A%84%E4%BE%9D%E8%B5%96%E5%8C%85/">如何华为云函数中使用自己的依赖包</a>
+    <h1 class="p-name article-title" itemprop="headline name">
+      如何华为云函数中使用自己的依赖包
     </h1>
   
 
@@ -128,104 +130,19 @@
     </footer>
   </div>
   
-</article>
-
-
-
+    
+<nav id="article-nav">
   
-    <article id="post-Jira常用API" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2024/08/19/Jira%E5%B8%B8%E7%94%A8API/" class="article-date">
-  <time class="dt-published" datetime="2024-08-19T07:04:13.000Z" itemprop="datePublished">2024-08-19</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2024/08/19/Jira%E5%B8%B8%E7%94%A8API/">Jira常用API</a>
-    </h1>
+    <a href="/2024/08/19/Jira%E5%B8%B8%E7%94%A8API/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">Jira常用API</div>
+    </a>
   
+</nav>
 
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>在我们的日常开发过程中，可以使用jira的api来对jira进行操作，比如创建issue，更新issue，更新issue状态，查询issue列表等。下面我来列举常用的api。</p>
-<h3 id="创建Issue"><a href="#创建Issue" class="headerlink" title="创建Issue"></a>创建Issue</h3><p>创建issue使得我们可以使用代码创建issue，api地址为：&#x2F;rest&#x2F;api&#x2F;2&#x2F;issue&#x2F;XXXX，使用Post方法，参数格式为：<br>{<br>    “fields”: {<br>        “project”: {<br>            “id”: “10000”<br>        },<br>        “summary”: “创建问题概况”,<br>        “issuetype”: {<br>            “id”: “10003”<br>        },<br>        “priority”: {<br>            “id”: “3”<br>        },<br>      “customfield_10000”: {<br>            “value”: “abcd”<br>        },<br>        “description”: “创建问题描述”<br>    }<br>}</p>
-<h3 id="修改issue"><a href="#修改issue" class="headerlink" title="修改issue"></a>修改issue</h3><p>修改issue的api地址为：&#x2F;rest&#x2F;api&#x2F;2&#x2F;issue&#x2F;issueKey，使用Put方法，将需要添加或者修改的参数放在json中：<br>{<br>    “fields” : {<br>        “description”: “Description111”,<br>        “customfield_10000”: {<br>            “value”: “ad”<br>        }<br>    }<br>}</p>
-<h3 id="获取issue详情："><a href="#获取issue详情：" class="headerlink" title="获取issue详情："></a>获取issue详情：</h3><p>获取issue详情的地址为：&#x2F;rest&#x2F;api&#x2F;2&#x2F;issue&#x2F;issueKey，使用get方法。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://yichen10.github.io/2024/08/19/Jira%E5%B8%B8%E7%94%A8API/" data-id="cm00nn9wz0000mcbzeqjmg40d" data-title="Jira常用API" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
   
 </article>
-
-
-
-  
-    <article id="post-hello-world" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2024/08/19/hello-world/" class="article-date">
-  <time class="dt-published" datetime="2024-08-19T06:46:10.150Z" itemprop="datePublished">2024-08-19</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2024/08/19/hello-world/">Hello World</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://yichen10.github.io/2024/08/19/hello-world/" data-id="cm00n9ton00004sbz1k1wc2ds" data-title="Hello World" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
 
 
 </section>
