@@ -360,7 +360,337 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        
+        <p>Spring Bean的注入方式主要有构造器注入、Setter注入、字段注入和方法注入。每种注入方式都有其优缺点，适用于不同的场景。构造器注入适用于强制依赖和不可变性的场景，Setter注入适用于可选依赖和灵活性的场景，字段注入适用于简洁性的场景，方法注入适用于灵活性和动态配置的场景。理解这些注入方式有助于更好地使用Spring框架，提高代码的可读性和可维护性。</p>
+<p>所以第一级缓存Map为： singletonObjects ，第二级缓存： earlySingletonObjects ，第三级缓存： singletonFactories<br>面试官：Spring 是如何解决的呢</p>
+<p>　　朋友：通过三级缓存提前暴露对象来解决的</p>
+<p>　　面试官：三级缓存里面分别存的什么</p>
+<p>　　朋友：一级缓存里存的是成品对象，实例化和初始化都完成了，我们的应用中使用的对象就是一级缓存中的</p>
+<p>　　　　二级缓存中存的是半成品，用来解决对象创建过程中的循环依赖问题</p>
+<p>　　　　三级缓存中存的是 ObjectFactory&lt;?&gt; 类型的 lambda 表达式，用于处理存在 AOP 时的循环依赖问题</p>
+<p>面试官：为什么要用三级缓存来解决循环依赖问题（只用一级缓存行不行，只用二级缓存行不行）</p>
+<p>　　朋友：霸点蛮，只用一级缓存也是可以解决的，但是会复杂化整个逻辑</p>
+<p>　　　　半成品对象是没法直接使用的（存在 NPE 问题），所以 Spring 需要保证在启动的过程中，所有中间产生的半成品对象最终都会变成成品对象</p>
+<p>　　　　如果将半成品对象和成品对象都混在一级缓存中，那么为了区分他们，势必会增加一些而外的标记和逻辑处理，这就会导致对象的创建过程变得复杂化了</p>
+<p>　　　　将半成品对象与成品对象分开存放，两级缓存各司其职，能够简化对象的创建过程，更简单、直观</p>
+<p>　　　　如果 Spring 不引入 AOP，那么两级缓存就够了，但是作为 Spring 的核心之一，AOP 怎能少得了呢</p>
+<p>　　　　所以为了处理 AOP 时的循环依赖，Spring 引入第三级缓存来处理循环依赖时的代理对象的创建</p>
+<p>在Spring框架中，Bean的注入方式主要有三种：构造器注入（Constructor Injection）、Setter注入（Setter Injection）和字段注入（Field Injection）。每种注入方式都有其优缺点，适用于不同的场景。以下是详细解释：</p>
+<h3 id="1-构造器注入（Constructor-Injection）"><a href="#1-构造器注入（Constructor-Injection）" class="headerlink" title="1. 构造器注入（Constructor Injection）"></a>1. <strong>构造器注入（Constructor Injection）</strong></h3><p>构造器注入是通过构造函数将依赖注入到Bean中。Spring容器会自动调用Bean的构造函数，并将所需的依赖作为参数传递给构造函数。</p>
+<h4 id="优点："><a href="#优点：" class="headerlink" title="优点："></a>优点：</h4><ul>
+<li><strong>强制依赖</strong>：构造器注入强制要求所有依赖在Bean创建时必须提供，确保Bean的完整性。</li>
+<li><strong>不可变性</strong>：构造器注入的依赖通常是<code>final</code>的，确保依赖不可变。</li>
+<li><strong>测试友好</strong>：构造器注入的Bean易于进行单元测试，可以通过构造函数直接注入Mock对象。</li>
+</ul>
+<h4 id="缺点："><a href="#缺点：" class="headerlink" title="缺点："></a>缺点：</h4><ul>
+<li><strong>构造函数参数过多</strong>：如果Bean有很多依赖，构造函数的参数列表可能会变得很长，影响代码的可读性。</li>
+</ul>
+<h4 id="示例："><a href="#示例：" class="headerlink" title="示例："></a>示例：</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserService</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> UserRepository userRepository;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> EmailService emailService;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">UserService</span><span class="params">(UserRepository userRepository, EmailService emailService)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.userRepository = userRepository;</span><br><span class="line">        <span class="built_in">this</span>.emailService = emailService;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 业务方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在Spring配置中：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.example.UserService&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">constructor-arg</span> <span class="attr">ref</span>=<span class="string">&quot;userRepository&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">constructor-arg</span> <span class="attr">ref</span>=<span class="string">&quot;emailService&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-Setter注入（Setter-Injection）"><a href="#2-Setter注入（Setter-Injection）" class="headerlink" title="2. Setter注入（Setter Injection）"></a>2. <strong>Setter注入（Setter Injection）</strong></h3><p>Setter注入是通过Setter方法将依赖注入到Bean中。Spring容器会自动调用Bean的Setter方法，并将所需的依赖作为参数传递给Setter方法。</p>
+<h4 id="优点：-1"><a href="#优点：-1" class="headerlink" title="优点："></a>优点：</h4><ul>
+<li><strong>可选依赖</strong>：Setter注入允许依赖是可选的，Bean可以在创建后动态地注入依赖。</li>
+<li><strong>灵活性</strong>：Setter注入允许在Bean创建后修改依赖，适用于需要动态配置的场景。</li>
+</ul>
+<h4 id="缺点：-1"><a href="#缺点：-1" class="headerlink" title="缺点："></a>缺点：</h4><ul>
+<li><strong>非强制依赖</strong>：Setter注入不强制要求所有依赖在Bean创建时必须提供，可能导致Bean的不完整。</li>
+<li><strong>可变性</strong>：Setter注入的依赖通常是可变的，可能引入线程安全问题。</li>
+</ul>
+<h4 id="示例：-1"><a href="#示例：-1" class="headerlink" title="示例："></a>示例：</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserService</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> UserRepository userRepository;</span><br><span class="line">    <span class="keyword">private</span> EmailService emailService;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setUserRepository</span><span class="params">(UserRepository userRepository)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.userRepository = userRepository;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setEmailService</span><span class="params">(EmailService emailService)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.emailService = emailService;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 业务方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在Spring配置中：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.example.UserService&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">&quot;userRepository&quot;</span> <span class="attr">ref</span>=<span class="string">&quot;userRepository&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">&quot;emailService&quot;</span> <span class="attr">ref</span>=<span class="string">&quot;emailService&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-字段注入（Field-Injection）"><a href="#3-字段注入（Field-Injection）" class="headerlink" title="3. 字段注入（Field Injection）"></a>3. <strong>字段注入（Field Injection）</strong></h3><p>字段注入是通过字段直接将依赖注入到Bean中。Spring容器会自动将所需的依赖注入到Bean的字段中。</p>
+<h4 id="优点：-2"><a href="#优点：-2" class="headerlink" title="优点："></a>优点：</h4><ul>
+<li><strong>简洁性</strong>：字段注入代码简洁，不需要编写构造函数或Setter方法。</li>
+</ul>
+<h4 id="缺点：-2"><a href="#缺点：-2" class="headerlink" title="缺点："></a>缺点：</h4><ul>
+<li><strong>非强制依赖</strong>：字段注入不强制要求所有依赖在Bean创建时必须提供，可能导致Bean的不完整。</li>
+<li><strong>可变性</strong>：字段注入的依赖通常是可变的，可能引入线程安全问题。</li>
+<li><strong>测试不友好</strong>：字段注入的Bean不易于进行单元测试，无法通过构造函数或Setter方法注入Mock对象。</li>
+</ul>
+<h4 id="示例：-2"><a href="#示例：-2" class="headerlink" title="示例："></a>示例：</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserService</span> &#123;</span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> UserRepository userRepository;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> EmailService emailService;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 业务方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在Spring配置中：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.example.UserService&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-方法注入（Method-Injection）"><a href="#4-方法注入（Method-Injection）" class="headerlink" title="4. 方法注入（Method Injection）"></a>4. <strong>方法注入（Method Injection）</strong></h3><p>方法注入是通过方法将依赖注入到Bean中。Spring容器会自动调用Bean的方法，并将所需的依赖作为参数传递给方法。</p>
+<h4 id="优点：-3"><a href="#优点：-3" class="headerlink" title="优点："></a>优点：</h4><ul>
+<li><strong>灵活性</strong>：方法注入允许在Bean创建后动态地注入依赖，适用于需要动态配置的场景。</li>
+</ul>
+<h4 id="缺点：-3"><a href="#缺点：-3" class="headerlink" title="缺点："></a>缺点：</h4><ul>
+<li><strong>复杂性</strong>：方法注入的代码相对复杂，需要编写额外的方法。</li>
+</ul>
+<h4 id="示例：-3"><a href="#示例：-3" class="headerlink" title="示例："></a>示例：</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserService</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> UserRepository userRepository;</span><br><span class="line">    <span class="keyword">private</span> EmailService emailService;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">configure</span><span class="params">(UserRepository userRepository, EmailService emailService)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.userRepository = userRepository;</span><br><span class="line">        <span class="built_in">this</span>.emailService = emailService;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 业务方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在Spring配置中：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.example.UserService&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Spring Bean的注入方式主要有构造器注入、Setter注入、字段注入和方法注入。每种注入方式都有其优缺点，适用于不同的场景。构造器注入适用于强制依赖和不可变性的场景，Setter注入适用于可选依赖和灵活性的场景，字段注入适用于简洁性的场景，方法注入适用于灵活性和动态配置的场景。理解这些注入方式有助于更好地使用Spring框架，提高代码的可读性和可维护性。</p>
+<p>Nacos（Naming and Configuration Service）是阿里巴巴开源的一个动态服务发现、配置管理和服务管理平台。Nacos在微服务架构中扮演着重要的角色，特别是在服务注册与发现、配置管理、服务健康检查等方面。以下是一些常见的Nacos面试题及其答案：</p>
+<h3 id="1-什么是Nacos？它的主要功能是什么？"><a href="#1-什么是Nacos？它的主要功能是什么？" class="headerlink" title="1. 什么是Nacos？它的主要功能是什么？"></a>1. <strong>什么是Nacos？它的主要功能是什么？</strong></h3><p><strong>答案</strong>：Nacos是一个动态服务发现、配置管理和服务管理平台。它的主要功能包括：</p>
+<ul>
+<li><strong>服务注册与发现</strong>：Nacos支持服务的注册与发现，帮助微服务应用在运行时动态地注册和发现服务实例。</li>
+<li><strong>配置管理</strong>：Nacos提供集中式的配置管理，支持动态配置更新，确保应用配置的实时性和一致性。</li>
+<li><strong>服务健康检查</strong>：Nacos可以对注册的服务实例进行健康检查，确保只有健康的服务实例被发现和使用。</li>
+<li><strong>服务元数据管理</strong>：Nacos支持服务元数据的存储和管理，帮助用户更好地理解和使用服务。</li>
+</ul>
+<h3 id="2-Nacos与Eureka、Consul、Zookeeper等服务注册中心有什么区别？"><a href="#2-Nacos与Eureka、Consul、Zookeeper等服务注册中心有什么区别？" class="headerlink" title="2. Nacos与Eureka、Consul、Zookeeper等服务注册中心有什么区别？"></a>2. <strong>Nacos与Eureka、Consul、Zookeeper等服务注册中心有什么区别？</strong></h3><p><strong>答案</strong>：Nacos与Eureka、Consul、Zookeeper等服务注册中心的主要区别在于功能和实现方式：</p>
+<ul>
+<li><strong>功能丰富性</strong>：Nacos不仅支持服务注册与发现，还支持配置管理和服务管理，功能更加丰富。</li>
+<li><strong>动态配置</strong>：Nacos支持动态配置更新，而Eureka和Zookeeper不支持。</li>
+<li><strong>健康检查</strong>：Nacos内置了健康检查功能，而Eureka和Zookeeper需要额外配置。</li>
+<li><strong>易用性</strong>：Nacos提供了更友好的用户界面和API，易于使用和管理。</li>
+<li><strong>性能</strong>：Nacos在性能和稳定性方面表现优异，适用于大规模微服务架构。</li>
+</ul>
+<h3 id="3-Nacos的服务注册与发现是如何实现的？"><a href="#3-Nacos的服务注册与发现是如何实现的？" class="headerlink" title="3. Nacos的服务注册与发现是如何实现的？"></a>3. <strong>Nacos的服务注册与发现是如何实现的？</strong></h3><p><strong>答案</strong>：Nacos的服务注册与发现通过以下步骤实现：</p>
+<ol>
+<li><strong>服务注册</strong>：服务实例启动时，通过Nacos提供的客户端SDK向Nacos服务器注册服务实例的信息，包括服务名、IP地址、端口等。</li>
+<li><strong>服务发现</strong>：客户端通过Nacos提供的API查询服务实例列表，获取可用的服务实例信息。</li>
+<li><strong>健康检查</strong>：Nacos服务器定期对注册的服务实例进行健康检查，确保只有健康的服务实例被发现和使用。</li>
+<li><strong>负载均衡</strong>：客户端可以根据负载均衡策略选择合适的服务实例进行调用。</li>
+</ol>
+<h3 id="4-Nacos的配置管理是如何实现的？"><a href="#4-Nacos的配置管理是如何实现的？" class="headerlink" title="4. Nacos的配置管理是如何实现的？"></a>4. <strong>Nacos的配置管理是如何实现的？</strong></h3><p><strong>答案</strong>：Nacos的配置管理通过以下步骤实现：</p>
+<ol>
+<li><strong>配置发布</strong>：用户通过Nacos提供的管理界面或API发布配置信息，配置信息存储在Nacos服务器中。</li>
+<li><strong>配置订阅</strong>：客户端通过Nacos提供的客户端SDK订阅配置信息，Nacos服务器将配置信息推送给客户端。</li>
+<li><strong>动态更新</strong>：当配置信息发生变化时，Nacos服务器会实时推送更新后的配置信息给客户端，客户端可以动态更新配置。</li>
+<li><strong>配置回滚</strong>：Nacos支持配置的版本管理，用户可以回滚到之前的配置版本。</li>
+</ol>
+<h3 id="5-Nacos的健康检查机制是什么？"><a href="#5-Nacos的健康检查机制是什么？" class="headerlink" title="5. Nacos的健康检查机制是什么？"></a>5. <strong>Nacos的健康检查机制是什么？</strong></h3><p><strong>答案</strong>：Nacos的健康检查机制包括以下几种方式：</p>
+<ul>
+<li><strong>TCP检查</strong>：Nacos通过TCP连接检查服务实例的可用性。</li>
+<li><strong>HTTP检查</strong>：Nacos通过HTTP请求检查服务实例的可用性。</li>
+<li><strong>自定义检查</strong>：用户可以自定义健康检查逻辑，通过Nacos提供的API上报健康状态。</li>
+</ul>
+<h3 id="6-Nacos的负载均衡策略有哪些？"><a href="#6-Nacos的负载均衡策略有哪些？" class="headerlink" title="6. Nacos的负载均衡策略有哪些？"></a>6. <strong>Nacos的负载均衡策略有哪些？</strong></h3><p><strong>答案</strong>：Nacos支持多种负载均衡策略，包括：</p>
+<ul>
+<li><strong>随机策略</strong>：随机选择一个服务实例进行调用。</li>
+<li><strong>轮询策略</strong>：按顺序轮流选择服务实例进行调用。</li>
+<li><strong>加权轮询策略</strong>：根据服务实例的权重进行轮询选择。</li>
+<li><strong>加权随机策略</strong>：根据服务实例的权重进行随机选择。</li>
+<li><strong>最小连接数策略</strong>：选择当前连接数最少的服务实例进行调用。</li>
+</ul>
+<h3 id="7-Nacos的配置中心与Spring-Cloud-Config有什么区别？"><a href="#7-Nacos的配置中心与Spring-Cloud-Config有什么区别？" class="headerlink" title="7. Nacos的配置中心与Spring Cloud Config有什么区别？"></a>7. <strong>Nacos的配置中心与Spring Cloud Config有什么区别？</strong></h3><p><strong>答案</strong>：Nacos的配置中心与Spring Cloud Config的主要区别在于功能和实现方式：</p>
+<ul>
+<li><strong>功能丰富性</strong>：Nacos不仅支持配置管理，还支持服务注册与发现和服务管理，功能更加丰富。</li>
+<li><strong>动态配置</strong>：Nacos支持动态配置更新，而Spring Cloud Config需要手动刷新配置。</li>
+<li><strong>易用性</strong>：Nacos提供了更友好的用户界面和API，易于使用和管理。</li>
+<li><strong>性能</strong>：Nacos在性能和稳定性方面表现优异，适用于大规模微服务架构。</li>
+</ul>
+<h3 id="8-Nacos的持久化机制是什么？"><a href="#8-Nacos的持久化机制是什么？" class="headerlink" title="8. Nacos的持久化机制是什么？"></a>8. <strong>Nacos的持久化机制是什么？</strong></h3><p><strong>答案</strong>：Nacos的持久化机制包括以下几种方式：</p>
+<ul>
+<li><strong>内存持久化</strong>：Nacos将服务实例和配置信息存储在内存中，确保高性能。</li>
+<li><strong>文件持久化</strong>：Nacos将服务实例和配置信息存储在文件系统中，确保数据持久化。</li>
+<li><strong>数据库持久化</strong>：Nacos支持将服务实例和配置信息存储在数据库中，确保数据的高可靠性和一致性。</li>
+</ul>
+<h3 id="9-Nacos的高可用性是如何实现的？"><a href="#9-Nacos的高可用性是如何实现的？" class="headerlink" title="9. Nacos的高可用性是如何实现的？"></a>9. <strong>Nacos的高可用性是如何实现的？</strong></h3><p><strong>答案</strong>：Nacos的高可用性通过以下方式实现：</p>
+<ul>
+<li><strong>集群部署</strong>：Nacos支持集群部署，多个Nacos节点组成一个集群，确保服务的高可用性。</li>
+<li><strong>数据同步</strong>：Nacos集群中的节点通过数据同步机制保持数据一致性。</li>
+<li><strong>负载均衡</strong>：Nacos集群中的节点通过负载均衡机制分担请求压力，确保服务的高性能。</li>
+<li><strong>故障转移</strong>：当某个Nacos节点发生故障时，其他节点可以接管服务，确保服务的连续性。</li>
+</ul>
+<h3 id="10-Nacos的客户端是如何与服务器通信的？"><a href="#10-Nacos的客户端是如何与服务器通信的？" class="headerlink" title="10. Nacos的客户端是如何与服务器通信的？"></a>10. <strong>Nacos的客户端是如何与服务器通信的？</strong></h3><p><strong>答案</strong>：Nacos的客户端与服务器通过以下方式通信：</p>
+<ul>
+<li><strong>HTTP&#x2F;HTTPS</strong>：客户端通过HTTP&#x2F;HTTPS协议与Nacos服务器进行通信，发送服务注册、服务发现、配置管理等请求。</li>
+<li><strong>长轮询</strong>：客户端通过长轮询机制与Nacos服务器进行通信，实时获取配置更新和服务实例变化。</li>
+<li><strong>TCP</strong>：客户端通过TCP协议与Nacos服务器进行通信，发送健康检查请求。</li>
+</ul>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p>Nacos是一个功能强大的动态服务发现、配置管理和服务管理平台，适用于大规模微服务架构。理解Nacos的核心功能和实现机制有助于更好地使用和管理Nacos，提高微服务应用的性能和稳定性。</p>
+<p>MyBatis 是一个优秀的持久层框架，支持定制化 SQL、存储过程以及高级映射。MyBatis 提供了两种类型的缓存：一级缓存和二级缓存。一级缓存是默认开启的，作用域是 <code>SqlSession</code>，而二级缓存的作用域是 <code>Mapper</code> 级别，可以跨 <code>SqlSession</code> 共享。</p>
+<p>MyBatis 提供了两种级别的缓存机制：一级缓存和二级缓存。这两种缓存机制在作用域、生命周期和使用场景上有所不同。下面详细介绍这两种缓存机制。</p>
+<h3 id="一级缓存"><a href="#一级缓存" class="headerlink" title="一级缓存"></a>一级缓存</h3><p>一级缓存是 MyBatis 默认开启的缓存机制，作用域是 <code>SqlSession</code>。每个 <code>SqlSession</code> 都有自己的一级缓存，不同 <code>SqlSession</code> 之间的一级缓存是相互独立的。</p>
+<h4 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h4><ol>
+<li><strong>作用域</strong>：<code>SqlSession</code> 级别。</li>
+<li><strong>生命周期</strong>：与 <code>SqlSession</code> 的生命周期相同，<code>SqlSession</code> 关闭后，一级缓存也随之失效。</li>
+<li><strong>默认开启</strong>：一级缓存是默认开启的，无需额外配置。</li>
+<li><strong>缓存更新</strong>：当 <code>SqlSession</code> 执行了 <code>commit</code> 操作（如插入、更新、删除），一级缓存会被清空。</li>
+</ol>
+<h4 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h4><ol>
+<li><strong>查询缓存</strong>：当执行查询操作时，MyBatis 首先会检查一级缓存中是否存在相同查询的结果。如果存在，则直接返回缓存中的结果，否则执行数据库查询并将结果存入一级缓存。</li>
+<li><strong>缓存清空</strong>：当 <code>SqlSession</code> 执行了 <code>commit</code> 操作，一级缓存会被清空，以保证数据的一致性。</li>
+</ol>
+<h4 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">SqlSession</span> <span class="variable">sqlSession</span> <span class="operator">=</span> sqlSessionFactory.openSession();</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="type">UserMapper</span> <span class="variable">userMapper</span> <span class="operator">=</span> sqlSession.getMapper(UserMapper.class);</span><br><span class="line">    <span class="type">User</span> <span class="variable">user1</span> <span class="operator">=</span> userMapper.getUserById(<span class="number">1</span>);  <span class="comment">// 第一次查询，从数据库获取</span></span><br><span class="line">    <span class="type">User</span> <span class="variable">user2</span> <span class="operator">=</span> userMapper.getUserById(<span class="number">1</span>);  <span class="comment">// 第二次查询，从一级缓存获取</span></span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    sqlSession.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="二级缓存"><a href="#二级缓存" class="headerlink" title="二级缓存"></a>二级缓存</h3><p>二级缓存的作用域是 <code>Mapper</code> 级别，可以跨 <code>SqlSession</code> 共享。二级缓存需要手动开启，并且可以通过配置使用不同的缓存实现，如 Ehcache、Redis 等。</p>
+<h4 id="特点-1"><a href="#特点-1" class="headerlink" title="特点"></a>特点</h4><ol>
+<li><strong>作用域</strong>：<code>Mapper</code> 级别，即同一个 <code>Mapper</code> 下的所有 <code>SqlSession</code> 共享同一个缓存。</li>
+<li><strong>生命周期</strong>：与 <code>Mapper</code> 的生命周期相同，<code>Mapper</code> 被加载时创建，应用程序关闭时销毁。</li>
+<li><strong>默认关闭</strong>：二级缓存默认是关闭的，需要手动开启。</li>
+<li><strong>缓存更新</strong>：当 <code>SqlSession</code> 执行了 <code>commit</code> 操作，二级缓存会被清空。</li>
+</ol>
+<h4 id="工作原理-1"><a href="#工作原理-1" class="headerlink" title="工作原理"></a>工作原理</h4><ol>
+<li><strong>开启二级缓存</strong>：在 <code>Mapper</code> 配置文件中添加 <code>&lt;cache&gt;</code> 标签，或者在 Mapper 接口上使用 <code>@CacheNamespace</code> 注解。</li>
+<li><strong>查询缓存</strong>：当执行查询操作时，MyBatis 首先会检查二级缓存中是否存在相同查询的结果。如果存在，则直接返回缓存中的结果，否则检查一级缓存，如果一级缓存中也没有，则执行数据库查询并将结果存入二级缓存。</li>
+<li><strong>缓存清空</strong>：当 <code>SqlSession</code> 执行了 <code>commit</code> 操作，二级缓存会被清空，以保证数据的一致性。</li>
+</ol>
+<h4 id="示例-1"><a href="#示例-1" class="headerlink" title="示例"></a>示例</h4><ol>
+<li><strong>在 Mapper 配置文件中开启二级缓存</strong>：</li>
+</ol>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">mapper</span> <span class="attr">namespace</span>=<span class="string">&quot;com.example.mapper.UserMapper&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">cache</span>/&gt;</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">&lt;!-- 其他 SQL 语句 --&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">mapper</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><strong>在 Mapper 接口上使用 <code>@CacheNamespace</code> 注解</strong>：</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@CacheNamespace</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">UserMapper</span> &#123;</span><br><span class="line">    <span class="comment">// 方法定义</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="缓存配置"><a href="#缓存配置" class="headerlink" title="缓存配置"></a>缓存配置</h3><h4 id="一级缓存配置"><a href="#一级缓存配置" class="headerlink" title="一级缓存配置"></a>一级缓存配置</h4><p>一级缓存是默认开启的，无需额外配置。可以通过 <code>flushCache</code> 属性来控制是否清空缓存：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;getUserById&quot;</span> <span class="attr">parameterType</span>=<span class="string">&quot;int&quot;</span> <span class="attr">resultType</span>=<span class="string">&quot;User&quot;</span> <span class="attr">flushCache</span>=<span class="string">&quot;false&quot;</span>&gt;</span></span><br><span class="line">    SELECT * FROM users WHERE id = #&#123;id&#125;</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="二级缓存配置"><a href="#二级缓存配置" class="headerlink" title="二级缓存配置"></a>二级缓存配置</h4><p>二级缓存需要手动开启，并且可以通过 <code>&lt;cache&gt;</code> 标签进行详细配置：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">cache</span></span></span><br><span class="line"><span class="tag">    <span class="attr">eviction</span>=<span class="string">&quot;LRU&quot;</span>  &lt;!<span class="attr">--</span> <span class="attr">缓存淘汰策略</span>：<span class="attr">LRU</span>（<span class="attr">最近最少使用</span>）、<span class="attr">FIFO</span>（<span class="attr">先进先出</span>）<span class="attr">等</span> <span class="attr">--</span>&gt;</span></span><br><span class="line">    flushInterval=&quot;60000&quot;  <span class="comment">&lt;!-- 缓存刷新时间间隔，单位毫秒 --&gt;</span></span><br><span class="line">    size=&quot;512&quot;  <span class="comment">&lt;!-- 缓存大小，单位为对象个数 --&gt;</span></span><br><span class="line">    readOnly=&quot;true&quot;/&gt;  <span class="comment">&lt;!-- 是否只读，true 表示缓存对象为只读，false 表示缓存对象为可读写 --&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="缓存实现"><a href="#缓存实现" class="headerlink" title="缓存实现"></a>缓存实现</h3><p>MyBatis 允许使用自定义的缓存实现。例如，使用 Ehcache 作为二级缓存：</p>
+<ol>
+<li><strong>引入 Ehcache 依赖</strong>：</li>
+</ol>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.mybatis.caches<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>mybatis-ehcache<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.2.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><strong>配置 Ehcache</strong>：</li>
+</ol>
+<p>在 <code>Mapper</code> 配置文件中，使用 <code>type</code> 属性指定 Ehcache 实现类：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">cache</span> <span class="attr">type</span>=<span class="string">&quot;org.mybatis.caches.ehcache.EhcacheCache&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><strong>配置 Ehcache 配置文件</strong>：</li>
+</ol>
+<p>在 <code>ehcache.xml</code> 中配置 Ehcache：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">ehcache</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">diskStore</span> <span class="attr">path</span>=<span class="string">&quot;java.io.tmpdir&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">defaultCache</span></span></span><br><span class="line"><span class="tag">        <span class="attr">maxElementsInMemory</span>=<span class="string">&quot;10000&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">eternal</span>=<span class="string">&quot;false&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">timeToIdleSeconds</span>=<span class="string">&quot;120&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">timeToLiveSeconds</span>=<span class="string">&quot;120&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">overflowToDisk</span>=<span class="string">&quot;true&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">diskPersistent</span>=<span class="string">&quot;false&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">diskExpiryThreadIntervalSeconds</span>=<span class="string">&quot;120&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">ehcache</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h3><ul>
+<li><strong>一级缓存</strong>：默认开启，作用域是 <code>SqlSession</code>，生命周期与 <code>SqlSession</code> 相同。</li>
+<li><strong>二级缓存</strong>：需要手动开启，作用域是 <code>Mapper</code>，生命周期与 <code>Mapper</code> 相同，可以跨 <code>SqlSession</code> 共享。</li>
+</ul>
+<p>通过合理使用一级缓存和二级缓存，可以有效提高 MyBatis 的查询性能。</p>
+<p>MyBatis 是一个优秀的持久层框架，广泛应用于 Java 应用中。以下是一些常见的 MyBatis 面试题及其解答，帮助您在面试中更好地展示自己的知识。</p>
+<h3 id="1-什么是-MyBatis？"><a href="#1-什么是-MyBatis？" class="headerlink" title="1. 什么是 MyBatis？"></a>1. 什么是 MyBatis？</h3><p><strong>解答</strong>：<br>MyBatis 是一个持久层框架，支持定制化 SQL、存储过程以及高级映射。它简化了数据库操作，允许开发者直接编写 SQL 语句，并将查询结果映射到 Java 对象。MyBatis 提供了灵活的配置选项，适用于各种复杂的数据库操作场景。</p>
+<h3 id="2-MyBatis-与-Hibernate-的区别是什么？"><a href="#2-MyBatis-与-Hibernate-的区别是什么？" class="headerlink" title="2. MyBatis 与 Hibernate 的区别是什么？"></a>2. MyBatis 与 Hibernate 的区别是什么？</h3><p><strong>解答</strong>：</p>
+<ul>
+<li><p><strong>MyBatis</strong>：</p>
+<ul>
+<li>直接编写 SQL 语句，灵活性高。</li>
+<li>需要手动编写 SQL，适合复杂查询和存储过程。</li>
+<li>结果集映射到 Java 对象，需要手动配置映射关系。</li>
+<li>轻量级，学习曲线较低。</li>
+</ul>
+</li>
+<li><p><strong>Hibernate</strong>：</p>
+<ul>
+<li>基于 ORM（对象关系映射），自动生成 SQL。</li>
+<li>适合简单的 CRUD 操作，减少手动编写 SQL 的工作量。</li>
+<li>提供缓存机制，性能优化更方便。</li>
+<li>功能强大，但学习曲线较高。</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-MyBatis-的核心组件有哪些？"><a href="#3-MyBatis-的核心组件有哪些？" class="headerlink" title="3. MyBatis 的核心组件有哪些？"></a>3. MyBatis 的核心组件有哪些？</h3><p><strong>解答</strong>：</p>
+<ul>
+<li><strong>SqlSessionFactory</strong>：用于创建 SqlSession 实例，是 MyBatis 的核心接口。</li>
+<li><strong>SqlSession</strong>：用于执行 SQL 语句，管理事务，是与数据库交互的主要接口。</li>
+<li><strong>Mapper 接口</strong>：定义 SQL 操作的方法，由 MyBatis 动态代理实现。</li>
+<li><strong>Mapper 配置文件</strong>：定义 SQL 语句和映射关系。</li>
+<li><strong>Configuration</strong>：包含 MyBatis 的所有配置信息。</li>
+</ul>
+<h3 id="4-如何配置-MyBatis？"><a href="#4-如何配置-MyBatis？" class="headerlink" title="4. 如何配置 MyBatis？"></a>4. 如何配置 MyBatis？</h3><p><strong>解答</strong>：<br>MyBatis 的配置主要包括以下几个步骤：</p>
+<ol>
+<li><strong>配置数据源</strong>：在 <code>mybatis-config.xml</code> 中配置数据库连接信息。</li>
+<li><strong>配置 Mapper</strong>：在 <code>mybatis-config.xml</code> 中注册 Mapper 接口或 XML 文件。</li>
+<li><strong>编写 SQL 语句</strong>：在 Mapper XML 文件中编写 SQL 语句。</li>
+<li><strong>创建 SqlSessionFactory</strong>：通过 <code>SqlSessionFactoryBuilder</code> 创建 <code>SqlSessionFactory</code> 实例。</li>
+<li><strong>获取 SqlSession</strong>：通过 <code>SqlSessionFactory</code> 获取 <code>SqlSession</code> 实例。</li>
+</ol>
+<h3 id="5-MyBatis-的一级缓存和二级缓存是什么？"><a href="#5-MyBatis-的一级缓存和二级缓存是什么？" class="headerlink" title="5. MyBatis 的一级缓存和二级缓存是什么？"></a>5. MyBatis 的一级缓存和二级缓存是什么？</h3><p><strong>解答</strong>：</p>
+<ul>
+<li><p><strong>一级缓存</strong>：</p>
+<ul>
+<li>作用域是 <code>SqlSession</code> 级别，默认开启。</li>
+<li>同一个 <code>SqlSession</code> 中的相同查询会使用缓存。</li>
+<li><code>SqlSession</code> 关闭后，一级缓存失效。</li>
+</ul>
+</li>
+<li><p><strong>二级缓存</strong>：</p>
+<ul>
+<li>作用域是 <code>Mapper</code> 级别，需要手动开启。</li>
+<li>同一个 <code>Mapper</code> 下的所有 <code>SqlSession</code> 共享同一个缓存。</li>
+<li>通过 <code>&lt;cache&gt;</code> 标签或 <code>@CacheNamespace</code> 注解开启。</li>
+</ul>
+</li>
+</ul>
+<h3 id="6-如何开启-MyBatis-的二级缓存？"><a href="#6-如何开启-MyBatis-的二级缓存？" class="headerlink" title="6. 如何开启 MyBatis 的二级缓存？"></a>6. 如何开启 MyBatis 的二级缓存？</h3><p><strong>解答</strong>：<br>在 Mapper 配置文件中添加 <code>&lt;cache&gt;</code> 标签：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">mapper</span> <span class="attr">namespace</span>=<span class="string">&quot;com.example.mapper.UserMapper&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">cache</span>/&gt;</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">&lt;!-- 其他 SQL 语句 --&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">mapper</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>或者在 Mapper 接口上使用 <code>@CacheNamespace</code> 注解：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@CacheNamespace</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">UserMapper</span> &#123;</span><br><span class="line">    <span class="comment">// 方法定义</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-MyBatis-的动态-SQL-有哪些标签？"><a href="#7-MyBatis-的动态-SQL-有哪些标签？" class="headerlink" title="7. MyBatis 的动态 SQL 有哪些标签？"></a>7. MyBatis 的动态 SQL 有哪些标签？</h3><p><strong>解答</strong>：</p>
+<ul>
+<li>**<code>&lt;if&gt;</code>**：条件判断，用于动态拼接 SQL 语句。</li>
+<li>**<code>&lt;choose&gt;</code>**：类似于 Java 的 switch 语句，用于多条件选择。</li>
+<li>**<code>&lt;when&gt;</code>**：配合 <code>&lt;choose&gt;</code> 使用，表示一个条件分支。</li>
+<li>**<code>&lt;otherwise&gt;</code>**：配合 <code>&lt;choose&gt;</code> 使用，表示默认分支。</li>
+<li>**<code>&lt;where&gt;</code>**：自动处理 SQL 中的 <code>WHERE</code> 子句，避免 <code>WHERE</code> 后的多余 <code>AND</code> 或 <code>OR</code>。</li>
+<li>**<code>&lt;set&gt;</code>**：自动处理 SQL 中的 <code>SET</code> 子句，避免 <code>SET</code> 后的多余逗号。</li>
+<li>**<code>&lt;foreach&gt;</code>**：用于遍历集合，生成 <code>IN</code> 子句或批量插入。</li>
+<li>**<code>&lt;trim&gt;</code>**：自定义 SQL 片段的前后缀。</li>
+</ul>
+<h3 id="8-MyBatis-的-和-的区别是什么？"><a href="#8-MyBatis-的-和-的区别是什么？" class="headerlink" title="8. MyBatis 的 #{} 和 ${} 的区别是什么？"></a>8. MyBatis 的 <code>#&#123;&#125;</code> 和 <code>$&#123;&#125;</code> 的区别是什么？</h3><p><strong>解答</strong>：</p>
+<ul>
+<li><p>**<code>#&#123;&#125;</code>**：</p>
+<ul>
+<li>使用预编译语句，防止 SQL 注入。</li>
+<li>参数会被自动加上引号，适合用于字符串和日期类型的参数。</li>
+</ul>
+</li>
+<li><p>**<code>$&#123;&#125;</code>**：</p>
+<ul>
+<li>直接替换参数，不进行预编译，存在 SQL 注入风险。</li>
+<li>参数不会自动加上引号，适合用于表名、列名等不需要引号的参数。</li>
+</ul>
+</li>
+</ul>
+<h3 id="9-MyBatis-如何处理存储过程？"><a href="#9-MyBatis-如何处理存储过程？" class="headerlink" title="9. MyBatis 如何处理存储过程？"></a>9. MyBatis 如何处理存储过程？</h3><p><strong>解答</strong>：<br>在 Mapper XML 文件中使用 <code>&lt;select&gt;</code> 或 <code>&lt;update&gt;</code> 标签，并设置 <code>statementType=&quot;CALLABLE&quot;</code>：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;callProcedure&quot;</span> <span class="attr">statementType</span>=<span class="string">&quot;CALLABLE&quot;</span> <span class="attr">parameterType</span>=<span class="string">&quot;map&quot;</span>&gt;</span></span><br><span class="line">    &#123;call my_procedure(#&#123;param1, mode=IN&#125;, #&#123;param2, mode=OUT, jdbcType=INTEGER&#125;)&#125;</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="10-MyBatis-如何处理分页查询？"><a href="#10-MyBatis-如何处理分页查询？" class="headerlink" title="10. MyBatis 如何处理分页查询？"></a>10. MyBatis 如何处理分页查询？</h3><p><strong>解答</strong>：<br>可以使用 MyBatis 的分页插件，如 <code>PageHelper</code>：</p>
+<ol>
+<li><strong>引入依赖</strong>：</li>
+</ol>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.github.pagehelper<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>pagehelper<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>5.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><strong>配置插件</strong>：</li>
+</ol>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">plugins</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">plugin</span> <span class="attr">interceptor</span>=<span class="string">&quot;com.github.pagehelper.PageInterceptor&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">&quot;helperDialect&quot;</span> <span class="attr">value</span>=<span class="string">&quot;mysql&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">plugins</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><strong>使用分页</strong>：</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">PageHelper.startPage(pageNum, pageSize);</span><br><span class="line">List&lt;User&gt; users = userMapper.selectUsers();</span><br><span class="line">PageInfo&lt;User&gt; pageInfo = <span class="keyword">new</span> <span class="title class_">PageInfo</span>&lt;&gt;(users);</span><br></pre></td></tr></table></figure>
+
+<h3 id="11-MyBatis-如何处理事务？"><a href="#11-MyBatis-如何处理事务？" class="headerlink" title="11. MyBatis 如何处理事务？"></a>11. MyBatis 如何处理事务？</h3><p><strong>解答</strong>：<br>MyBatis 通过 <code>SqlSession</code> 管理事务，可以使用以下方法：</p>
+<ul>
+<li><strong>手动提交</strong>：</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">SqlSession</span> <span class="variable">sqlSession</span> <span class="operator">=</span> sqlSessionFactory.openSession();</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// 执行 SQL 操作</span></span><br><span class="line">    sqlSession.commit();</span><br><span class="line">&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    sqlSession.rollback();</span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    sqlSession.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>自动提交</strong>：</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">SqlSession</span> <span class="variable">sqlSession</span> <span class="operator">=</span> sqlSessionFactory.openSession(<span class="literal">true</span>);</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// 执行 SQL 操作</span></span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    sqlSession.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="12-MyBatis-如何处理延迟加载？"><a href="#12-MyBatis-如何处理延迟加载？" class="headerlink" title="12. MyBatis 如何处理延迟加载？"></a>12. MyBatis 如何处理延迟加载？</h3><p><strong>解答</strong>：<br>在 MyBatis 中，可以通过配置 <code>lazyLoadingEnabled</code> 和 <code>aggressiveLazyLoading</code> 来实现延迟加载：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">settings</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">setting</span> <span class="attr">name</span>=<span class="string">&quot;lazyLoadingEnabled&quot;</span> <span class="attr">value</span>=<span class="string">&quot;true&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">setting</span> <span class="attr">name</span>=<span class="string">&quot;aggressiveLazyLoading&quot;</span> <span class="attr">value</span>=<span class="string">&quot;false&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">settings</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>在映射关系中使用 <code>fetchType=&quot;lazy&quot;</code>：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">resultMap</span> <span class="attr">id</span>=<span class="string">&quot;userResultMap&quot;</span> <span class="attr">type</span>=<span class="string">&quot;User&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">id</span> <span class="attr">property</span>=<span class="string">&quot;id&quot;</span> <span class="attr">column</span>=<span class="string">&quot;id&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">result</span> <span class="attr">property</span>=<span class="string">&quot;name&quot;</span> <span class="attr">column</span>=<span class="string">&quot;name&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">association</span> <span class="attr">property</span>=<span class="string">&quot;address&quot;</span> <span class="attr">column</span>=<span class="string">&quot;address_id&quot;</span> <span class="attr">javaType</span>=<span class="string">&quot;Address&quot;</span> <span class="attr">fetchType</span>=<span class="string">&quot;lazy&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">resultMap</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="总结-3"><a href="#总结-3" class="headerlink" title="总结"></a>总结</h3><p>MyBatis 是一个功能强大且灵活的持久层框架，掌握其核心概念和使用技巧对于 Java 开发者来说非常重要。通过以上面试题的解答，您可以更好地理解 MyBatis 的工作原理和常见问题的解决方法，从而在面试中展示自己的专业能力。</p>
+
       
     </div>
     <footer class="article-footer">
