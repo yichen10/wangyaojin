@@ -6,15 +6,15 @@
   
   <title>面试6-线上oom | 一尘的个人博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="Java线上出现OOM，如何处理内存过高一般有两种情况：内存溢出和内存泄露线上排查：1.系统已经挂掉了，-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath&#x3D;&#x2F;path&#x2F;to&#x2F;heapdump.hprof导出oom日志到本地，使用VisualVM分析，有个标签为抽样器，可以看到哪个类占用的大小，，哪一个类占用了多少">
+  <meta name="description" content="Java线上出现OOM，如何处理对于还在正常运行的系统1.可以使用jmap来查看JVM中各个区域的使用情况2可以通过jstack来查看线程的运行情况，比如哪些线程阻塞、是否出现了死锁3.可以通过jstat命令来查看垃圾回收的情况，特别是fullgc，如果发现fullgc比较频繁，那么就得进行调优了4.通过各个命令的结果，或者jvisualvm等工具来进行分析5.首先，初步猜测频繁发送fullg的原">
 <meta property="og:type" content="article">
 <meta property="og:title" content="面试6-线上oom">
 <meta property="og:url" content="https://yichen10.github.io/2024/11/05/%E9%9D%A2%E8%AF%956-%E7%BA%BF%E4%B8%8Aoom/index.html">
 <meta property="og:site_name" content="一尘的个人博客">
-<meta property="og:description" content="Java线上出现OOM，如何处理内存过高一般有两种情况：内存溢出和内存泄露线上排查：1.系统已经挂掉了，-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath&#x3D;&#x2F;path&#x2F;to&#x2F;heapdump.hprof导出oom日志到本地，使用VisualVM分析，有个标签为抽样器，可以看到哪个类占用的大小，，哪一个类占用了多少">
+<meta property="og:description" content="Java线上出现OOM，如何处理对于还在正常运行的系统1.可以使用jmap来查看JVM中各个区域的使用情况2可以通过jstack来查看线程的运行情况，比如哪些线程阻塞、是否出现了死锁3.可以通过jstat命令来查看垃圾回收的情况，特别是fullgc，如果发现fullgc比较频繁，那么就得进行调优了4.通过各个命令的结果，或者jvisualvm等工具来进行分析5.首先，初步猜测频繁发送fullg的原">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-11-05T09:15:45.000Z">
-<meta property="article:modified_time" content="2024-11-05T09:16:07.564Z">
+<meta property="article:modified_time" content="2024-11-07T08:34:08.764Z">
 <meta property="article:author" content="yichen">
 <meta name="twitter:card" content="summary">
   
@@ -97,8 +97,11 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>Java线上出现OOM，如何处理<br>内存过高一般有两种情况：内存溢出和内存泄露<br>线上排查：<br>1.系统已经挂掉了，-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath&#x3D;&#x2F;path&#x2F;to&#x2F;heapdump.hprof<br>导出oom日志到本地，使用VisualVM分析，有个标签为抽样器，可以看到哪个类占用的大小，<br>，哪一个类占用了多少内存，就会显示出来，点击抽样器，内存，之后就会对远程的那台机器的JAVA进程内存，在图形化界面中显示，有多少个类，占用了多少个字节，这样我们就可以具体定位到是哪个类有问题了<br>2.系统没有挂掉，使用jmap命令，生成堆转储和线程快照，命令为：<br>jmap -dump:live,format&#x3D;b,file&#x3D;&#x2F;path&#x2F;to&#x2F;heapdump.hprof <pid><br>拿到hprof文件后再用VisualVM分析<br>3.使用阿里的开源软件Arthas<br>Arthas 是一个开源的 Java 诊断工具，提供了丰富的命令来监控和诊断 Java 应用程序。你可以通过以下命令安装和启动 Arthas：</p>
+        <p>Java线上出现OOM，如何处理<br>对于还在正常运行的系统<br>1.可以使用jmap来查看JVM中各个区域的使用情况<br>2可以通过jstack来查看线程的运行情况，比如哪些线程阻<br>塞、是否出现了死锁<br>3.可以通过jstat命令来查看垃圾回收的情况，特别是fullgc，如果发现fullgc比较频繁，那么就得进行调优了<br>4.通过各个命令的结果，或者jvisualvm等工具来进行分析<br>5.首先，初步猜测频繁发送fullg的原因，如果频繁发生fullgc但是又一直没有出现内存溢出，那么表示fullgc实际上是回收了很多对象了，所以这些对象最好能在younggo过程中就直接回收掉，避免这些对象进入到老年代，对于这种情况，就要考虑这些存活时间不长的对象是不是比较大，导致年轻代放不下，直接进入到了老年代，尝试加大年轻代的大小，如果改完之后，fullgc减少，则证明修改有效<br>6.同时，(jvisualvm有个标签为抽样器)还可以找到占用CPU最多的线程，定位到具体的方法，优化这个方法的执行，看是否能避免某些对象的创建，从而节省内存</p>
+<p>对于已经发生了OOM的系统<br>1.一般生产系统中都会设置当系统发生了OOM时，生成当时的dump文件(-XX:+HeapDumpOnOutOfMemoryErrorXX:HeapDumpPath&#x3D;&#x2F;usr&#x2F;local&#x2F;base)<br>2.我们可以利用jvisualvm等工具来分析dump文件<br>3.根据dump文件找到异常的实例对象，和异常的线程(占用CPU高)，定位到具体的代码<br>4.然后再进行详细的分析和调试<br>调优不是一蹴而就的，需要分析、推理、实践、总结、再分析，最终定位到具体的问题</p>
+<p>内存过高一般有两种情况：内存溢出和内存泄露<br>线上排查：<br>1.系统已经挂掉了，-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath&#x3D;&#x2F;path&#x2F;to&#x2F;heapdump.hprof<br>导出oom日志到本地，使用VisualVM分析，有个标签为抽样器，可以看到哪个类占用的大小，<br>，哪一个类占用了多少内存，就会显示出来，点击抽样器，内存，之后就会对远程的那台机器的JAVA进程内存，在图形化界面中显示，有多少个类，占用了多少个字节，这样我们就可以具体定位到是哪个类有问题了<br>2.系统没有挂掉，使用jmap命令，生成堆转储和线程快照，命令为：<br>jmap -dump:live,format&#x3D;b,file&#x3D;&#x2F;path&#x2F;to&#x2F;heapdump.hprof <pid><br>拿到hprof文件后再用VisualVM分析<br>3.使用阿里的开源软件Arthas<br>Arthas 是一个开源的 Java 诊断工具，提供了丰富的命令来监控和诊断 Java 应用程序。你可以通过以下命令安装和启动 Arthas：</p>
 <p>curl -O <a target="_blank" rel="noopener" href="https://arthas.aliyun.com/arthas-boot.jar">https://arthas.aliyun.com/arthas-boot.jar</a><br>java -jar arthas-boot.jar<br>Arthas 提供了诸如 dashboard、thread、heapdump 等命令，帮助你实时监控应用程序的运行状态和内存使用情况。</p>
+<p>Springboot的自动配置原理？<br>1.引入@EnableAutoConfiguration： 在Spring Boot应用程序的主配置类（通常是带有@SpringBootApplication注解的类）中，通常会引入@EnableAutoConfiguration注解，该注解负责启动自动配置功能。<br>2.@EnableAutoConfiguration引入了@Import： @EnableAutoConfiguration注解实际上是通过@Import注解引入的。这意味着它会导入其他配置类，这些配置类包含了Spring Boot自动配置的逻辑。<br>3.解析@Import注解： 当Spring容器启动时，会解析@Import注解，并加载相应的配置。<br>4.deferredImportSelector： 通过@Import导入的配置类中可能包含了一个deferredImportSelector，它的作用是确保Spring Boot的自动配置类在最后加载，以便方便扩展和覆盖。<br>5.读取META-INF&#x2F;spring.factories文件： Spring Boot通过SPI（Service Provider Interface）机制，读取类路径下的META-INF&#x2F;spring.factories文件，该文件包含了各种自动配置类的配置。<br>6.过滤出AutoConfigurationClass： 从spring.factories文件中，Spring Boot会过滤出所有AutoConfigurationClass类型的类，这些类包含了自动配置的具体实现。<br>7.条件化加载： 最后，Spring Boot会根据条件（@ConditionalXXX注解）来排除或包含特定的自动配置类。这些条件会根据应用程序的环境和配置动态生效。<br>总结起来，Spring Boot的自动配置原理是通过@EnableAutoConfiguration注解引入自动配置逻辑，然后解析@Import注解，加载各种配置类，包括deferredImportSelector和自动配置类。通过SPI机制读取spring.factories文件，过滤出自动配置类，并根据条件化配置来动态加载这些类，从而实现自动配置的功能。这种机制使得Spring Boot应用程序可以根据环境和需求自动配置，极大地简化了开发和部署的工作。</p>
 <p>内存溢出： 程序分配的内存超过物理机的内存大小，导致无法继续分配内存，出现OOM报错<br>内存泄露： 不再使用的对象一直占据着内存不释放，导致这块内存浪费掉，久而久之，内存泄露的对象堆积起来，也会导致物理机的内存被耗尽，出现OOM报错<br>内存溢出（Out of Memory, OOM）和内存泄漏（Memory Leak）是 Java 开发中常见的内存管理问题。它们可能导致应用程序崩溃或性能下降。下面分别介绍这两种问题的场景、原因以及解决方法。</p>
 <h3 id="内存溢出（Out-of-Memory-OOM）"><a href="#内存溢出（Out-of-Memory-OOM）" class="headerlink" title="内存溢出（Out of Memory, OOM）"></a>内存溢出（Out of Memory, OOM）</h3><h4 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h4><p>内存溢出通常发生在应用程序尝试分配的内存超过了 JVM 可用的最大内存限制时。常见的场景包括：</p>
 <ol>
@@ -167,6 +170,52 @@
 <p>Provider 机制：在运行时动态生成 SQL 语句，并在生成过程中进行参数校验。</p>
 <p>Interceptor 机制：在 SQL 执行前对传入的参数进行校验和处理。</p>
 <p>通过这些方法，可以有效防止 SQL 注入，确保传入的表名是安全的。</p>
+<p>Spring Cloud LoadBalancer 提供了多种负载均衡策略，可以根据不同的需求选择合适的策略。以下是一些常见的负载均衡策略及其使用场景：</p>
+<h3 id="1-轮询（Round-Robin）"><a href="#1-轮询（Round-Robin）" class="headerlink" title="1. 轮询（Round Robin）"></a>1. <strong>轮询（Round Robin）</strong></h3><p>轮询策略是最常见的负载均衡策略之一。它按照顺序依次选择服务实例，确保每个实例都能均匀地处理请求。</p>
+<p><strong>使用场景</strong>：适用于服务实例性能相近，且请求负载均匀分布的情况。</p>
+<p><strong>配置示例</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">cloud:</span></span><br><span class="line">    <span class="attr">loadbalancer:</span></span><br><span class="line">      <span class="attr">configurations:</span> <span class="string">round-robin</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-随机（Random）"><a href="#2-随机（Random）" class="headerlink" title="2. 随机（Random）"></a>2. <strong>随机（Random）</strong></h3><p>随机策略从可用的服务实例中随机选择一个实例。这种策略可以避免某些实例长时间处于空闲状态。</p>
+<p><strong>使用场景</strong>：适用于服务实例性能相近，且希望避免某些实例长时间处于空闲状态的情况。</p>
+<p><strong>配置示例</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">cloud:</span></span><br><span class="line">    <span class="attr">loadbalancer:</span></span><br><span class="line">      <span class="attr">configurations:</span> <span class="string">random</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-加权轮询（Weighted-Round-Robin）"><a href="#3-加权轮询（Weighted-Round-Robin）" class="headerlink" title="3. 加权轮询（Weighted Round Robin）"></a>3. <strong>加权轮询（Weighted Round Robin）</strong></h3><p>加权轮询策略根据服务实例的权重进行选择。权重较高的实例会被更频繁地选择。</p>
+<p><strong>使用场景</strong>：适用于服务实例性能不同，且希望根据性能分配请求负载的情况。</p>
+<p><strong>配置示例</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">cloud:</span></span><br><span class="line">    <span class="attr">loadbalancer:</span></span><br><span class="line">      <span class="attr">configurations:</span> <span class="string">weighted</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-加权随机（Weighted-Random）"><a href="#4-加权随机（Weighted-Random）" class="headerlink" title="4. 加权随机（Weighted Random）"></a>4. <strong>加权随机（Weighted Random）</strong></h3><p>加权随机策略根据服务实例的权重随机选择一个实例。权重较高的实例被选择的概率更大。</p>
+<p><strong>使用场景</strong>：适用于服务实例性能不同，且希望根据性能随机分配请求负载的情况。</p>
+<p><strong>配置示例</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">cloud:</span></span><br><span class="line">    <span class="attr">loadbalancer:</span></span><br><span class="line">      <span class="attr">configurations:</span> <span class="string">weighted-random</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="5-最少连接（Least-Connections）"><a href="#5-最少连接（Least-Connections）" class="headerlink" title="5. 最少连接（Least Connections）"></a>5. <strong>最少连接（Least Connections）</strong></h3><p>最少连接策略选择当前连接数最少的服务实例。这种策略适用于请求处理时间较长的场景。</p>
+<p><strong>使用场景</strong>：适用于请求处理时间较长，且希望避免某些实例过载的情况。</p>
+<p><strong>配置示例</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">cloud:</span></span><br><span class="line">    <span class="attr">loadbalancer:</span></span><br><span class="line">      <span class="attr">configurations:</span> <span class="string">least-connections</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="6-响应时间加权（Response-Time-Weighted）"><a href="#6-响应时间加权（Response-Time-Weighted）" class="headerlink" title="6. 响应时间加权（Response Time Weighted）"></a>6. <strong>响应时间加权（Response Time Weighted）</strong></h3><p>响应时间加权策略根据服务实例的响应时间进行选择。响应时间较短的实例会被更频繁地选择。</p>
+<p><strong>使用场景</strong>：适用于服务实例响应时间不同，且希望根据响应时间分配请求负载的情况。</p>
+<p><strong>配置示例</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">cloud:</span></span><br><span class="line">    <span class="attr">loadbalancer:</span></span><br><span class="line">      <span class="attr">configurations:</span> <span class="string">response-time-weighted</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="7-区域感知（Zone-Preference）"><a href="#7-区域感知（Zone-Preference）" class="headerlink" title="7. 区域感知（Zone Preference）"></a>7. <strong>区域感知（Zone Preference）</strong></h3><p>区域感知策略优先选择与客户端在同一区域的服务实例。这种策略适用于多区域部署的场景。</p>
+<p><strong>使用场景</strong>：适用于多区域部署，且希望优先选择与客户端在同一区域的服务实例的情况。</p>
+<p><strong>配置示例</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">cloud:</span></span><br><span class="line">    <span class="attr">loadbalancer:</span></span><br><span class="line">      <span class="attr">configurations:</span> <span class="string">zone-preference</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="8-自定义策略"><a href="#8-自定义策略" class="headerlink" title="8. 自定义策略"></a>8. <strong>自定义策略</strong></h3><p>如果内置的负载均衡策略不能满足需求，可以实现自定义的负载均衡策略。可以通过实现 <code>ReactorServiceInstanceLoadBalancer</code> 接口来定义自定义策略。</p>
+<p><strong>使用场景</strong>：适用于需要特殊负载均衡逻辑的场景。</p>
+<p><strong>配置示例</strong>：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> org.springframework.cloud.client.ServiceInstance;</span><br><span class="line"><span class="keyword">import</span> org.springframework.cloud.client.loadbalancer.reactive.ReactorServiceInstanceLoadBalancer;</span><br><span class="line"><span class="keyword">import</span> org.springframework.cloud.client.loadbalancer.reactive.Request;</span><br><span class="line"><span class="keyword">import</span> org.springframework.cloud.client.loadbalancer.reactive.Response;</span><br><span class="line"><span class="keyword">import</span> reactor.core.publisher.Mono;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">CustomLoadBalancer</span> <span class="keyword">implements</span> <span class="title class_">ReactorServiceInstanceLoadBalancer</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> Mono&lt;Response&lt;ServiceInstance&gt;&gt; <span class="title function_">choose</span><span class="params">(Request request)</span> &#123;</span><br><span class="line">        <span class="comment">// 自定义负载均衡逻辑</span></span><br><span class="line">        <span class="keyword">return</span> Mono.just(<span class="keyword">new</span> <span class="title class_">Response</span>&lt;&gt;(<span class="comment">/* 选择的服务实例 */</span>));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后在配置类中注册这个自定义负载均衡器：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> org.springframework.cloud.client.loadbalancer.LoadBalanced;</span><br><span class="line"><span class="keyword">import</span> org.springframework.context.annotation.Bean;</span><br><span class="line"><span class="keyword">import</span> org.springframework.context.annotation.Configuration;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LoadBalancerConfig</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="meta">@LoadBalanced</span></span><br><span class="line">    <span class="keyword">public</span> ReactorServiceInstanceLoadBalancer <span class="title function_">customLoadBalancer</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">CustomLoadBalancer</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h3><p>Spring Cloud LoadBalancer 提供了多种负载均衡策略，包括轮询、随机、加权轮询、加权随机、最少连接、响应时间加权、区域感知等。可以根据不同的需求选择合适的策略，甚至可以通过实现自定义策略来满足特殊需求。通过这些策略，Spring Cloud LoadBalancer 可以有效地分配请求负载，提高系统的可用性和性能。</p>
+<p>mybatis-plus分页查询的实现原理：<br>1、由分页拦截器PaginationInnerInterceptor拦截所有查询请求，在执行查询前判断参数中是否包含IPage类型的参数。<br>2、如果包含IPage类型的参数，则根据分页信息，重新组装成分页查询的SQL。</p>
 
       
     </div>
